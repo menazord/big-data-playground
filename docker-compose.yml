@@ -1,0 +1,78 @@
+version: "3"
+
+services:
+  namenode:
+    image: hadoop:namenode
+    container_name: namenode
+    ports:
+      - 9870:9870
+      - 9000:9000
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop.env
+
+  datanode:
+    image: hadoop:datanode
+    container_name: datanode
+    depends_on:
+      - namenode
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+
+  spark-iceberg:
+    image: spark:iceberg
+    container_name: spark-iceberg
+    depends_on:
+      - datanode
+      - namenode
+    volumes:
+      - ./warehouse:/home/iceberg/warehouse
+      - ./notebooks:/home/iceberg/notebooks/notebooks
+    ports:
+      - 8888:8888
+      - 8080:8080
+      - 10000:10000
+      - 10001:10001
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: metastore
+    healthcheck:
+      test: [ "CMD", "psql", "-U", "${POSTGRES_USER}", "${POSTGRES_DB}" ]
+    ports:
+      - '5432:5432'
+
+  hive-metastore:
+    image: hive:metastore
+    container_name: hive-metastore
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_DB=metastore
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=secret
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=testSecret
+      - S3_BUCKET=local-test
+      - S3_PREFIX=data
+      - S3_ENDPOINT_URL=s3.us-east-2.amazonaws.com
+    depends_on:
+      - datanode
+      - namenode
+      - postgres
+    ports:
+      - 9083:9083
+
+volumes:
+  hadoop_namenode:
+  hadoop_datanode:
