@@ -24,6 +24,9 @@ RUN apt-get -q update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+RUN mkdir /var/run/sshd
+RUN service ssh start
+
 # Download binaries, checksum, signature, verify integrity and install
 RUN \
     mkdir -p ${HADOOP_HOME} && \
@@ -54,6 +57,11 @@ ENV HDFS_DATANODE_USER=hdfs
 ENV HDFS_SECONDARYNAMENODE_USER=hdfs
 ENV PATH=$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$PATH
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+
+# Set up passwordless SSH for Hadoop communication
+RUN ssh-keygen -q -t rsa -N "" -f ~/.ssh/id_rsa && \
+    cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys && \
+    chmod 0600 ~/.ssh/authorized_keys
 
 COPY config/core-site.xml $HADOOP_HOME/etc/hadoop/
 COPY config/hdfs-site.xml $HADOOP_HOME/etc/hadoop/
