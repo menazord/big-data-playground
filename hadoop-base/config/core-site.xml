@@ -1,0 +1,17 @@
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://namenode:9000</value>
+    </property>
+
+    <!-- Superuser permissions for the notebooks user, there must be a better way though -->
+    <property>
+        <name>hadoop.proxyuser.jovyan.groups</name>
+        <value>*</value>
+    </property>
+
+    <property>
+        <name>hadoop.proxyuser.jovyan.hosts</name>
+        <value>*</value>
+    </property>
+</configuration>

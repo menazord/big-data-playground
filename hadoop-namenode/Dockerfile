@@ -2,15 +2,16 @@ FROM hadoop:base
 
 MAINTAINER Cristian Meneses <hello@cristianmeneses.io>
 
+ENV HADOOP_HOME=${HADOOP_HOME:-"/home/hadoop"}
+
 HEALTHCHECK CMD curl -f http://localhost:9870/ || exit 1
 
-ENV HDFS_CONF_dfs_namenode_name_dir=file:///hadoop/dfs/name
 RUN mkdir -p /hadoop/dfs/name
 VOLUME /hadoop/dfs/name
 
-ADD run.sh /run.sh
-RUN chmod a+x /run.sh
-
 EXPOSE 9870
 
-CMD ["/run.sh"]
+ADD entrypoint.sh /entrypoint.sh
+RUN chmod a+x /entrypoint.sh
+
+CMD ["/entrypoint.sh"]

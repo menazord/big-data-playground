@@ -5,74 +5,94 @@ services:
     image: hadoop:namenode
     container_name: namenode
     ports:
-      - 9870:9870
-      - 9000:9000
+      - "9870:9870" # NameNode UI
+      - "9000:9000" # NameNode RPC
     volumes:
-      - hadoop_namenode:/hadoop/dfs/name
+      - ./hadoop/namenode/data:/hadoop/dfs/name
     environment:
-      - CLUSTER_NAME=test
+      - HDFS_NAMENODE_USER=hdfs
+      - HDFS_DATANODE_USER=hdfs
+      - HDFS_SECONDARYNAMENODE_USER=hdfs
+      - CLUSTER_NAME=hadoop-cluster
+      - HDFS_NAMENODE_USER=root
+      - HADOOP_SSH_OPTS="-o StrictHostKeyChecking=no"
     env_file:
       - ./hadoop.env
+    networks:
+      - bdt-network
 
   datanode:
     image: hadoop:datanode
     container_name: datanode
     depends_on:
       - namenode
+    ports:
+      - "9864:9864" # DataNode UI
     volumes:
-      - hadoop_datanode:/hadoop/dfs/data
+      - ./hadoop/datanode/data:/hadoop/dfs/data
     environment:
-      SERVICE_PRECONDITION: "namenode:9870"
+      - HDFS_NAMENODE_USER=hdfs
+      - HDFS_DATANODE_USER=hdfs
+      - HDFS_SECONDARYNAMENODE_USER=hdfs
     env_file:
       - ./hadoop.env
+    networks:
+      - bdt-network
 
-  spark-iceberg:
-    image: spark:iceberg
-    container_name: spark-iceberg
-    depends_on:
-      - datanode
-      - namenode
+  jupyter-notebook:
+    container_name: jupyter-notebook
+    image: jupyter:notebook
     volumes:
-      - ./warehouse:/home/iceberg/warehouse
-      - ./notebooks:/home/iceberg/notebooks/notebooks
+      - "./scripts/sparkdata:/sparkdata"
+      - "./scripts/work:/home/jovyan/work"
     ports:
-      - 8888:8888
-      - 8080:8080
-      - 10000:10000
-      - 10001:10001
+      - "8888:8888"
+    networks:
+      - bdt-network
 
   postgres:
-    image: postgres:14-alpine
+    image: postgres:13
     container_name: postgres
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: secret
+      POSTGRES_USER: hiveuser
+      POSTGRES_PASSWORD: hivepassword
       POSTGRES_DB: metastore
-    healthcheck:
-      test: [ "CMD", "psql", "-U", "${POSTGRES_USER}", "${POSTGRES_DB}" ]
+    volumes:
+      - ./postgres/init-hive-metastore.sql:/docker-entrypoint-initdb.d/init-hive-metastore.sql
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - '5432:5432'
+    networks:
+      - bdt-network
 
   hive-metastore:
     image: hive:metastore
     container_name: hive-metastore
     environment:
-      - DATABASE_HOST=postgres
-      - DATABASE_DB=metastore
-      - DATABASE_USER=admin
-      - DATABASE_PASSWORD=secret
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=testSecret
-      - S3_BUCKET=local-test
-      - S3_PREFIX=data
-      - S3_ENDPOINT_URL=s3.us-east-2.amazonaws.com
+      - HDFS_NAMENODE_USER=hdfs
+      - HDFS_DATANODE_USER=hdfs
+      - HDFS_SECONDARYNAMENODE_USER=hdfs
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=metastore
+      - POSTGRES_USER=hiveuser
+      - POSTGRES_PASSWORD=hivepassword
+      - HIVE_CONF_DIR=/opt/hive/conf
     depends_on:
-      - datanode
-      - namenode
       - postgres
+      - namenode
+      - datanode
     ports:
-      - 9083:9083
+      - "9083:9083"   # ACTUAL Thrift port
+      - "10000:10000" # HiveServer2
+      - "10002:10002" # Hive Metastore Thrift
+    networks:
+      - bdt-network
 
 volumes:
   hadoop_namenode:
   hadoop_datanode:
+  postgres_data:
+
+networks:
+  bdt-network:
+    driver: bridge
