@@ -1,4 +1,4 @@
-FROM hadoop:base
+FROM hadoop-base:latest
 
 MAINTAINER Cristian Meneses <hello@cristianmeneses.io>
 
