@@ -1,4 +1,4 @@
-FROM hadoop:base
+FROM hadoop-base:latest
 
 # Spark 3.5 is not compatible with Hive 4.0.x. Downgrading to 4.0.0
 ARG HIVE_VERSION=4.0.0

@@ -119,9 +119,20 @@ brew install parquet-cli
 ## Building the images
 
 Just use the Makefile on the project root level.
+
+For example, to build the Hive Metastore image, run
 ```shell
-make all
+make build-metastore
 ```
+
+To build all images
+```shell
+make build-all
+```
+
+There are additional targets to tag and publish images, but make sure
+to update `DOCKER_USERNAME` on the Makefile and also do a `docker login`
+for all DockerHub commands to succeed.
 
 ## Spinning up the environment
 
