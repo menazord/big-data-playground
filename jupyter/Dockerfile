@@ -1,6 +1,6 @@
 FROM jupyter/pyspark-notebook:latest
 
-ENV SPARK_MAJOR_VERSION=3.5.0
+ENV SPARK_MAJOR_VERSION=3.5
 ENV SCALA_VERSION=2.12
 ENV ICEBERG_VERSION=1.8.1
 ENV ICEBERG_JAR="iceberg-spark-runtime-${SPARK_MAJOR_VERSION}_2.12-${ICEBERG_VERSION}.jar"
@@ -22,5 +22,10 @@ COPY config/spark-defaults.conf $SPARK_HOME/conf/spark-defaults.conf
 
 # Switch back to the default jovyan user
 USER $NB_UID
+
+# Just for fun, let's add more kernels
+RUN \
+    pip install toree && \
+    jupyter toree install --user --spark_home=${SPARK_HOME}
 
 ENV HADOOP_USER_NAME=hdfs

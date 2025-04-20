@@ -6,6 +6,18 @@ Local playground for Spark and Jupyter notebooks, plus Iceberg support
 Learning more about data analytics tooling, especially Spark and interactive
 notebooks such as Jupyter.
 
+## What's included
+
+This playground has the following features
+- A Hadoop Datanode (Hadoop 3.4.1)
+- A Hadoop Namenode (Hadoop 3.4.1)
+- A Hive Metastore (Hive 4.0.0)
+- A PostgreSQL database (backing Hive)
+- Jupyter notebooks, including
+  - Spark 3.5.x
+  - Python Kernel (default)
+  - Scala kernel (Apache Toree)
+
 ## How am I testing this
 
 This was created on:
@@ -200,5 +212,4 @@ Services that can be accessed once the stack is active
 
 ## Next steps
 
-- Tag images properly
 - Sample data preloaded on HDFS.
